@@ -19,7 +19,7 @@ import keyboard
 
 
 location = 0        #0 is spawn, 1 is flarg, 2 is fishing spot
-fishing_state = 0   #0 is nothing, 1 is fish button is onscreen, 2 is exit fising button is onscreen
+fishing_state = 0   #67 is nothing, 0 is fish button is onscreen, 1 is exit fising button is onscreen, 2 is currently fishing, 3 is fish caught
 collection_open = (31, 451)
 collection_exit = (384, 126)
 flarg_sell_open = (959, 942)
@@ -28,14 +28,14 @@ flarg_sell_all = (665, 802)
 flarg_confirm_sell = (794, 621)
 flarg_exit = (1459, 261)
 monitor = {"top": 770, "left": 758, "width": 403, "height": 1}          #this sets the fishing area to be monitored, its 1 pixel high to reduce lag
-fish_pixel_coord = (849, 836)
-fish_pixel_rgb_ref = (120, 140, 255)
-exit_fishing_pixel_rgb_ref = (255, 117, 117)           #these are reference colour values for checking against the testing pixel
+pixel_matrix = [[849, 849, 851, 1087], # x
+                [836, 836, 358 , 809], # y
+                [120, 255, 255, 255 ], # r
+                [140, 117, 255, 0   ], # g
+                [255, 117, 255, 0   ]] # b          #these are reference colour values for checking against the testing pixel
 fishing_bar_rgb = (0, 0, 0)
 testing_pixel_rgb = (0, 0, 0)
-
-
-
+expected_rgb = (0, 0, 0)
 
 
 def kill_loop():
@@ -62,9 +62,6 @@ def sample_pixel(x, y):
     with mss.MSS() as sct:
         pixel = sct.grab({"left": x, "top": y, "width": 1, "height": 1})
         return tuple(pixel.rgb)
-    
-
-
 
 def click_at(x: int, y: int):
     pydirectinput.moveTo(x-1, y)
@@ -148,17 +145,29 @@ def sell_to_flarg(loops):
         click_at(*flarg_confirm_sell)
 
 def check_fishing_state():
-    testing_pixel_rgb = sample_pixel(*fish_pixel_coord)
-    if testing_pixel_rgb == fish_pixel_rgb_ref:
-        fishing_state = 1
-    
-    elif testing_pixel_rgb == exit_fishing_pixel_rgb_ref:
-        fishing_state = 2
+    global fishing_state 
+    k = 0
+    matched_pixel = 0
+    while k <= 3:
+        #edo if you are reading this i love you <3
+        expected_rgb = (pixel_matrix[2][k], pixel_matrix[3][k], pixel_matrix[4][k])
+        if sample_pixel(pixel_matrix[0][k], pixel_matrix[1][k]) == expected_rgb:
+            fishing_state = k
+            matched_pixel = 1
+            print(fishing_state)
+            break
+        else:
+            k = k + 1
+            continue
+    if matched_pixel == 0:
+        fishing_state = 67
+        print("match not found")
+
+
     print(f"Fishing state is {fishing_state}")
     time.sleep(1)
 
 keyboard.add_hotkey("k", kill_loop)
+check_fishing_state()
 
 
-
-    
