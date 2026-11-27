@@ -14,16 +14,18 @@ import re
 import pydirectinput
 import pyautogui
 import keyboard
+from pathlib import Path
 from PIL import Image
 
 
-with open(os.path.join(os.path.dirname(__file__), "config.json"), encoding="utf-8") as config_file:
+with open(Path(__file__).parent/'config.json', encoding="utf-8") as config_file:
     config = json.load(config_file)    #selects the config file to load the stuff from
 
 BIOME_COLORS = config["biome_colors"]
 BIOMES = list(BIOME_COLORS)
 DO_NOT_SKIP_BIOMES = config["do_not_skip_biomes"]
-settings = config["settings"]         #puts the lists under the names settings
+settings = config["settings"]  #puts the lists under the names settings
+BIOME_STATS = {BIOMES[i+1]: 0 for i in range(len(BIOMES) - 1)}
 
 current_biome = "START"
 last_biome = None
@@ -223,12 +225,18 @@ with open(latest_log_file, 'r', encoding='utf-8', errors='ignore') as file:
             #compare for biomes
             if biome_check: # "if var == true" is the same as "if var" -e
                 for biome in BIOMES:
-                    if biome in clean_line.upper(): # i have no idea how this works. -e     me neither -a
+                    if biome in clean_line.upper():# i have no idea how this works. -e     me neither -a
                         if current_biome != biome:
+                            BIOME_STATS[current_biome] += 1
+                            with open(Path(__file__).parent / 'biomestats.json', 'w', encoding="utf-8") as stats_file:
+                                '''If the biomestats file doesn't exist, I create it and add all the necessary information.'''
+                                # TODO: adam can u test plsss ty <3 - e
+                                y = json.dumps(BIOME_STATS, indent=1)
+                                stats_file.write(y)
                             if last_biome != "NORMAL" and last_biome != "START":    #checks if biome is not the last registered biome and is not normal, this is for br and sc changes during biome
                                 biome_change(biome)
                                 print(f"{last_biome} biome has ended.")
-                                print(f"[BIOME DETECTED]:Biome is now {current_biome}!")
+                                print(f"[BIOME DETECTED ]:Biome is now {current_biome}!")
                                 webhook = discord_webhook.DiscordWebhook(url=biome_webhook_url)
                                 webhook.add_embed(get_end_biome_embed())
                                 webhook.add_embed(get_start_biome_embed())
@@ -273,11 +281,6 @@ with open(latest_log_file, 'r', encoding='utf-8', errors='ignore') as file:
                         use_device(1)
                     elif DO_NOT_SKIP_BIOMES.get(current_biome, True):
                         biome_randomizer_time = int(time.time()) + 10
-
-# else exit is useless, when macro_is_open == 0, the while statements ends on its own. -e
-# also, we should put the while macro_is_open loop in a main.py, and leave the biome detection (and auto sc and br) in separate files, even from each other. -e
-# i want the macro to kill the process if the menu gets closed so it doesnt keep running -a
-#can you do the moving because i have noclue how to do that and i think i would mess up and it would break, pwetty pwease🥺 -a
 
 
 
