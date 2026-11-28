@@ -112,6 +112,14 @@ def biome_change(biome: str):
     current_biome = biome
     return last_biome, current_biome
 
+def edit_stats(biome: str):
+    """Raises the counter for the biome just occurred by one"""
+    BIOME_STATS[biome] += 1
+    with open(Path(__file__).parent / 'biomestatstemp.json', 'w', encoding="utf-8") as stats_file:
+        '''If the biomestats file doesn't exist, this will create it and add all the necessary information.'''
+        json.dump(BIOME_STATS, file, indent=1)       # Dumps to a temporary file
+    os.replace(Path(__file__).parent / 'biomestatstemp.json', Path(__file__).parent / 'biomestats.json')        # This makes sure the file can't get corrupted, since os.replace is atomic
+
 
 def click_at(x: int, y: int):
     pydirectinput.moveTo(x-1, y)
@@ -227,14 +235,9 @@ with open(latest_log_file, 'r', encoding='utf-8', errors='ignore') as file:
                 for biome in BIOMES:
                     if biome in clean_line.upper():# i have no idea how this works. -e     me neither -a
                         if current_biome != biome:
-                            BIOME_STATS[current_biome] += 1
-                            with open(Path(__file__).parent / 'biomestats.json', 'w', encoding="utf-8") as stats_file:
-                                '''If the biomestats file doesn't exist, I create it and add all the necessary information.'''
-                                # TODO: adam can u test plsss ty <3 - e
-                                y = json.dumps(BIOME_STATS, indent=1)
-                                stats_file.write(y)
+                            biome_change(biome)
+                            edit_stats(biome) # These repeated in every single if statement -e
                             if last_biome != "NORMAL" and last_biome != "START":    #checks if biome is not the last registered biome and is not normal, this is for br and sc changes during biome
-                                biome_change(biome)
                                 print(f"{last_biome} biome has ended.")
                                 print(f"[BIOME DETECTED ]:Biome is now {current_biome}!")
                                 webhook = discord_webhook.DiscordWebhook(url=biome_webhook_url)
@@ -246,7 +249,6 @@ with open(latest_log_file, 'r', encoding='utf-8', errors='ignore') as file:
                             elif current_biome == "NORMAL":  #checks if the biome changed to normal which means it ended normally
                                                              # You had if current_biome != "NORMAL" and if current_biome == "NORMAL" which is always False. I assume you mean if current_biome == "NORMAL" -e
                                                              # This code might look unreachable because current_biome is according to your IDE always initalised to "START" -e
-                                biome_change(biome)
                                 print(f"{current_biome} biome has ended.")
                                 webhook = discord_webhook.DiscordWebhook(url=biome_webhook_url)
                                 webhook.add_embed(get_end_biome_embed())
@@ -255,13 +257,11 @@ with open(latest_log_file, 'r', encoding='utf-8', errors='ignore') as file:
                             elif current_biome != "NORMAL": #this checks if the biome is new from normal biome which means it does not need an end biome embed
                                                             # current_biome and biome are already different by the if statement at the top. -e
                                                             # This code might look unreachable for same reason above. -e
-                                biome_change(biome)
                                 print(f"[BIOME DETECTED]:Biome is now {current_biome}!")
                                 webhook = discord_webhook.DiscordWebhook(url=biome_webhook_url)
                                 webhook.add_embed(get_start_biome_embed())
                                 response = webhook.execute()
                                 break
-                            else: continue
 
 
             if anti_afk == True and anti_afk_time < int(time.time()):     #putting anti afk here
