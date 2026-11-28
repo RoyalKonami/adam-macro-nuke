@@ -25,7 +25,8 @@ BIOME_COLORS = config["biome_colors"]
 BIOMES = list(BIOME_COLORS)
 DO_NOT_SKIP_BIOMES = config["do_not_skip_biomes"]
 settings = config["settings"]  #puts the lists under the names settings
-BIOME_STATS = {BIOMES[i+1]: 0 for i in range(len(BIOMES) - 1)}
+with open(Path(__file__).parent/'biomestats.json', encoding="utf-8") as stats_file:
+    BIOME_STATS = json.load(stats_file)
 
 current_biome = "START"
 last_biome = None
